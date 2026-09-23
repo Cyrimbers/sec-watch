@@ -1,0 +1,29 @@
+# sec-watch settings.
+# The watchlist and alert rules here are only the STARTING values. After the first run
+# you can change both from the dashboard (they're saved in data/secwatch.db).
+
+# Example tickers — replace with your own, or edit the watchlist from the dashboard.
+watchlist:
+  - AAPL
+  - MSFT
+  - NVDA
+  - JPM
+
+poll_seconds: 20          # how often to check EDGAR's live feed (lower than 10 is pointless)
+sweep_minutes: 5          # full per-company re-check, catches anything the live feed missed
+backfill_days: 90         # history loaded when a ticker is first added
+catchup_hours: 24         # on start-up, one digest alert covering what landed while it was off
+
+alerts:
+  insider_buy: true            # open-market purchase (Form 4 code P). The one you care about.
+  insider_buy_min_usd: 0       # ignore buys smaller than this
+  insider_sell: true           # open-market sale (code S)
+  insider_sell_min_usd: 1000000
+  skip_10b5_1_sales: true      # pre-scheduled 10b5-1 plan sales are usually noise
+  forms:                       # alert on any filing of these types for your watchlist
+    - 8-K
+    - SC 13D
+    - SCHEDULE 13D
+    - SC 13D/A
+    - SCHEDULE 13D/A
+  alert_window_minutes: 90     # never alert on filings older than this (stops a flood on first start)

@@ -1,0 +1,11 @@
+services:
+  sec-watch:
+    build: .
+    container_name: sec-watch
+    restart: unless-stopped        # comes back automatically after a reboot / Docker restart
+    ports:
+      - "8080:8080"                # dashboard at http://localhost:8080
+    env_file: .env
+    volumes:
+      - ./data:/srv/data           # SQLite database lives here and survives rebuilds
+      - ./config.yaml:/srv/config.yaml:ro

@@ -1,0 +1,4 @@
+# Normalise line endings so Windows and Linux checkouts agree
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
