@@ -25,4 +25,7 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# put the project root on sys.path: `python -m pytest` does this implicitly via the cwd,
+# the bare `pytest` console script (what CI runs) does not, and `import app` then fails
+pythonpath = ["."]
 addopts = "-q"
