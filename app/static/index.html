@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEC Watch</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2310b981'/><path d='M8 21l5-6 4 3 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+:root{
+  --bg:#0b0f14; --panel:#121821; --panel2:#18202b; --line:#233040; --text:#e6edf3; --muted:#8b98a8;
+  --green:#22c55e; --green-bg:rgba(34,197,94,.12); --red:#f87171; --red-bg:rgba(248,113,113,.12);
+  --amber:#fbbf24; --amber-bg:rgba(251,191,36,.12); --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12);
+  --accent:#10b981; --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){:root{
+  --bg:#f5f7fa; --panel:#fff; --panel2:#f0f3f7; --line:#dde3ea; --text:#111827; --muted:#5b6675;
+  --green:#15803d; --green-bg:#dcfce7; --red:#b91c1c; --red-bg:#fee2e2; --amber:#a16207; --amber-bg:#fef3c7;
+  --blue:#1d4ed8; --blue-bg:#dbeafe;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+.wrap{max-width:1280px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.01em}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);display:grid;place-items:center}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--green);box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulse 2s infinite}
+.dot.bad{background:var(--red)}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.btn{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+.btn:hover{background:var(--panel2)} .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.banner{padding:10px 14px;border-radius:var(--radius);background:var(--red-bg);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 35%,transparent);margin-bottom:12px}
+.banner.warn{background:var(--amber-bg);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 2px 8px;font-weight:600}
+
+/* watchlist */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-weight:600;font-family:var(--mono);font-size:13px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .x{border:0;background:none;cursor:pointer;opacity:.5;padding:0 6px;font-size:15px;line-height:1}
+.chip .x:hover{opacity:1}
+.chip.all{padding-right:11px;font-family:inherit}
+.add{display:flex;gap:6px}
+.add input{width:110px;padding:5px 10px;border-radius:999px;border:1px dashed var(--line);background:transparent;text-transform:uppercase;font-family:var(--mono)}
+
+/* insider strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.ins{padding:12px 14px;cursor:pointer}
+.ins:hover{border-color:var(--accent)}
+.ins .t{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-weight:700}
+.ins .v{font-size:20px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.ins .s{color:var(--muted);font-size:12px}
+.ins.zero .v{color:var(--muted);font-weight:500;font-size:15px}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 10px}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:5px 11px;border-radius:6px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--panel2);color:var(--text);font-weight:600}
+.search{padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:var(--panel);min-width:200px;flex:1;max-width:320px}
+
+/* feed */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--panel2)}
+tr.new td{animation:flash 3s ease-out}
+@keyframes flash{0%{background:rgba(16,185,129,.25)}100%{background:transparent}}
+.time{white-space:nowrap;font-variant-numeric:tabular-nums}
+.time .rel{color:var(--muted);font-size:12px}
+.tk{font-family:var(--mono);font-weight:700}
+.co{color:var(--muted);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.form{display:inline-block;padding:2px 7px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);font-family:var(--mono);font-size:12px;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:700;letter-spacing:.02em;margin-right:6px}
+.badge.buy{background:var(--green-bg);color:var(--green)}
+.badge.sell{background:var(--red-bg);color:var(--red)}
+.badge.other{background:var(--panel2);color:var(--muted);font-weight:600}
+.badge.plan{background:var(--amber-bg);color:var(--amber);font-weight:600}
+.badge.cluster{background:var(--green-bg);color:var(--green);font-size:11px}
+.badge.ev{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.who{font-weight:600} .role{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.val{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.val.buy{color:var(--green)} .val.sell{color:var(--red)}
+.detail td{background:var(--panel2);padding:0}
+.detail .inner{padding:10px 14px 14px}
+.tx th,.tx td{padding:6px 10px;font-size:13px;border-bottom:1px solid var(--line)}
+.tx td.r,.tx th.r{text-align:right}
+.notes{margin-top:10px;padding:9px 12px;border-left:3px solid var(--line);background:var(--panel);border-radius:0 8px 8px 0;font-size:13px;color:var(--text);max-width:900px}
+.notes-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-bottom:4px}
+.notes div+div{margin-top:5px}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.more{display:block;margin:12px auto} .more[hidden]{display:none}
+
+/* drawer */
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}
+.drawer.open{display:block}
+.drawer .panel{position:absolute;right:0;top:0;bottom:0;width:min(440px,100%);background:var(--panel);border-left:1px solid var(--line);padding:20px;overflow:auto}
+.field{margin:14px 0} .field label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.field .sub{color:var(--muted);font-size:12px;margin:3px 0 0 26px}
+.field input[type=number],.field input[type=text]{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);margin-top:5px}
+.log{font-size:13px} .log div{padding:7px 0;border-bottom:1px solid var(--line)}
+.log .ts{color:var(--muted);font-size:12px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+
+@media (max-width:760px){
+  .wrap{padding:12px}
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr.row{padding:10px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px}
+  tr.row td{padding:0;border:0}
+  tr.row td.c-time{grid-column:3;grid-row:1;text-align:right}
+  tr.row td.c-tk{grid-column:1;grid-row:1}
+  tr.row td.c-form{grid-column:2;grid-row:1}
+  tr.row td.c-det{grid-column:1/4;grid-row:2}
+  tr.row td.c-val{grid-column:1/3;grid-row:3}
+  tr.row td.c-link{grid-column:3;grid-row:3;text-align:right}
+  .co{display:none}
+  .search{max-width:none}
+  .strip{grid-template-columns:1fr 1fr}
+  .ins .v{font-size:17px}
+  tr.row td.c-val{text-align:left!important}
+  .tx{display:table} .tx tbody{display:table-row-group} .tx tr{display:table-row} .tx td,.tx th{display:table-cell}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo"><svg width="18" height="18" viewBox="0 0 32 32"><path d="M5 22l7-8 5 4 10-12" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>SEC Watch</div>
+    <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></span>
+    <div class="spacer"></div>
+    <button class="btn" id="testBtn">Send test alert</button>
+    <button class="btn" id="settingsBtn">Alert rules</button>
+  </header>
+
+  <div id="banners"></div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="section-title">Insider activity · last 90 days</div>
+  <div class="strip" id="strip"></div>
+
+  <div class="filters">
+    <div class="seg" id="groupSeg"></div>
+    <div class="seg" id="sigSeg"></div>
+    <input class="search" id="search" placeholder="Search insider, company, form…">
+  </div>
+
+  <div class="card"><table>
+    <thead><tr><th>Filed</th><th>Ticker</th><th>Form</th><th>Details</th><th style="text-align:right">Value</th><th></th></tr></thead>
+    <tbody id="feed"></tbody>
+  </table></div>
+  <button class="btn more" id="moreBtn" hidden>Load older</button>
+</div>
+
+<div class="drawer" id="drawer"><div class="panel">
+  <div style="display:flex;align-items:center"><h3 style="margin:0">Alert rules</h3><div class="spacer"></div><button class="btn" id="closeDrawer">Close</button></div>
+  <p style="color:var(--muted);margin:6px 0 0">Phone alerts only fire for tickers on your watchlist.</p>
+  <form id="rulesForm">
+    <div class="field"><label><input type="checkbox" name="insider_buy"> Insider open-market <b>buys</b> (Form 4 code P)</label>
+      <div class="sub">Minimum value (USD)<input type="number" name="insider_buy_min_usd" min="0" step="1000"></div></div>
+    <div class="field"><label><input type="checkbox" name="insider_sell"> Insider open-market <b>sales</b> (code S)</label>
+      <div class="sub">Minimum value (USD)<input type="number" name="insider_sell_min_usd" min="0" step="10000"></div></div>
+    <div class="field"><label><input type="checkbox" name="skip_10b5_1_sales"> Skip sales made under a 10b5-1 plan</label>
+      <div class="sub">These are pre-scheduled months in advance, so they say little about what the insider thinks now.</div></div>
+    <div class="field"><label style="cursor:default">Also alert on these forms</label>
+      <div class="sub" style="margin-left:0">Comma separated, e.g. 8-K, SC 13D, 10-Q<input type="text" name="forms"></div></div>
+    <div class="field"><label style="cursor:default">Ignore filings older than (minutes)</label>
+      <div class="sub" style="margin-left:0">Stops a flood of alerts after the PC has been off.<input type="number" name="alert_window_minutes" min="5"></div></div>
+    <button class="btn primary" type="submit">Save rules</button>
+  </form>
+  <div class="section-title" style="margin-top:26px">Recent alerts</div>
+  <div class="log" id="alertLog"></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api = async (path, opts={}) => {
+  const r = await fetch(path, {headers:{"Content-Type":"application/json"}, ...opts});
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m } catch{} throw new Error(m); }
+  return r.json();
+};
+const toast = msg => { const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); };
+const money = v => { if(!v) return "–"; const a=Math.abs(v);
+  return a>=1e9?`$${(v/1e9).toFixed(2)}B`:a>=1e6?`$${(v/1e6).toFixed(2)}M`:a>=1e3?`$${(v/1e3).toFixed(1)}K`:`$${v.toFixed(0)}`; };
+const num = v => v==null? "–" : Number(v).toLocaleString("en-GB",{maximumFractionDigits:0});
+const price = v => v? "$"+Number(v).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2}) : "–";
+const pad = n => String(n).padStart(2,"0");
+const fmtDate = iso => { const d=new Date(iso); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtDay = s => s ? s.split("-").reverse().join("/") : "–";          // 2026-09-16 -> 16/09/2026
+const rel = iso => { const s=(Date.now()-new Date(iso))/1000;
+  if(s<60) return "just now"; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
+
+const GROUPS = [["","All"],["insider","Insider"],["events","8-K"],["periodic","10-K/Q"],["ownership","13D/G"],["offerings","Offerings"],["proxy","Proxy"],["other","Other"]];
+const SIGS = [["","All trades"],["BUY","Buys"],["SELL","Sales"]];
+let META = {codes:{}, items_8k:{}};
+const state = { tickers:new Set(), group:"", signal:"", q:"", rows:[], seen:new Set(), open:new Set(), firstLoad:true };
+
+function seg(el, items, key){
+  el.innerHTML = items.map(([v,l]) => `<button data-v="${v}" class="${state[key]===v?"on":""}">${l}</button>`).join("");
+  el.onclick = e => { const b=e.target.closest("button"); if(!b) return; state[key]=b.dataset.v; seg(el,items,key); loadFeed(); };
+}
+
+// ---------------- status ----------------
+async function loadStatus(){
+  try{
+    const s = await api("/api/status");
+    const ok = s.last_poll_ok && !s.error;
+    $("#statusDot").className = "dot " + (ok ? "ok" : (s.last_poll ? "bad" : ""));
+    let txt = s.last_poll ? `Live · checked ${rel(s.last_poll)}` : "Starting…";
+    if (s.backfilling) txt += ` · loading ${s.backfilling} history`;
+    $("#statusText").textContent = txt;
+    const b = [];
+    if (s.error) b.push(`<div class="banner">${esc(s.error)}</div>`);
+    if (!s.ntfy_ok) b.push(`<div class="banner warn">NTFY_TOPIC isn't set in .env, so phone alerts are off. The dashboard still works.</div>`);
+    $("#banners").innerHTML = b.join("");
+    $("#alertLog").innerHTML = s.recent_alerts.length ? s.recent_alerts.map(a =>
+      `<div><div>${a.ok?"":"⚠️ "}${esc(a.title)}</div><div class="ts">${fmtDate(a.sent_at)}${a.body?" · "+esc(a.body.split("\n")[0]):""}</div></div>`).join("")
+      : `<div style="color:var(--muted)">No alerts sent yet.</div>`;
+  }catch(e){ $("#statusDot").className="dot bad"; $("#statusText").textContent="Can't reach the server"; }
+}
+
+// ---------------- watchlist ----------------
+async function loadWatch(){
+  const w = await api("/api/watchlist");
+  const chips = [`<span class="chip all ${state.tickers.size?"":"on"}" data-all>All</span>`]
+    .concat(w.map(x => `<span class="chip ${state.tickers.has(x.ticker)?"on":""}" data-t="${x.ticker}" title="${esc(x.name||"")}">${x.ticker}<button class="x" data-rm="${x.ticker}" title="Remove">×</button></span>`));
+  chips.push(`<form class="add" id="addForm"><input id="addInput" placeholder="+ Ticker" maxlength="10" autocomplete="off"></form>`);
+  $("#chips").innerHTML = chips.join("");
+  $("#addForm").onsubmit = async e => { e.preventDefault(); const t=$("#addInput").value.trim(); if(!t) return;
+    try{ const r = await api("/api/watchlist",{method:"POST",body:JSON.stringify({ticker:t})}); toast(`Watching ${r.ticker} · loading history`); loadWatch(); loadStrip(); }
+    catch(err){ toast(err.message); } };
+}
+$("#chips").addEventListener("click", async e => {
+  const rm = e.target.closest("[data-rm]");
+  if (rm){ e.stopPropagation(); const t=rm.dataset.rm; if(!confirm(`Stop watching ${t}? Its saved filings stay in the feed.`)) return;
+    await api(`/api/watchlist/${t}`,{method:"DELETE"}); state.tickers.delete(t); loadWatch(); loadStrip(); return; }
+  const c = e.target.closest(".chip"); if(!c) return;
+  if (c.dataset.all!==undefined) state.tickers.clear();
+  else { const t=c.dataset.t; state.tickers.has(t)?state.tickers.delete(t):state.tickers.add(t); }
+  loadWatch(); loadFeed();
+});
+
+// ---------------- insider strip ----------------
+async function loadStrip(){
+  const rows = await api("/api/insider-summary?days=90");
+  $("#strip").innerHTML = rows.map(r => {
+    const zero = !r.buy_count;
+    return `<div class="card ins ${zero?"zero":""}" data-t="${r.ticker}">
+      <div class="t"><span>${r.ticker}</span>${r.cluster?`<span class="badge cluster">CLUSTER BUY</span>`:""}</div>
+      <div class="v" style="${zero?"":"color:var(--green)"}">${zero?"No insider buys":money(r.buy_value)+" bought"}</div>
+      <div class="s">${zero?"":`${r.buyers.length} insider${r.buyers.length===1?"":"s"} · last ${rel(r.last_buy)}`}${r.sell_count?`${zero?"":" · "}<span style="color:var(--red)">${money(r.sell_value)} sold</span>`:""}</div>
+    </div>`; }).join("") || `<div class="empty card">Add a ticker above to start watching.</div>`;
+}
+$("#strip").addEventListener("click", e => { const c=e.target.closest(".ins"); if(!c) return;
+  state.tickers = new Set([c.dataset.t]); state.group="insider"; seg($("#groupSeg"),GROUPS,"group"); loadWatch(); loadFeed(); });
+
+// ---------------- feed ----------------
+function detailCell(f){
+  if (["3","4","5","3/A","4/A","5/A"].includes(f.form)){
+    const sig = f.signal==="BUY" ? `<span class="badge buy">BUY</span>` : f.signal==="SELL" ? `<span class="badge sell">SELL</span>` : "";
+    const nd = f.transactions.filter(t=>!t.derivative);
+    const main = nd.filter(t=>t.code===(f.signal==="BUY"?"P":"S"));
+    let what = "";
+    if (f.codes==="HOLD") return `<span class="who">${esc(f.insider||"")}</span>${f.insider_role?` <span class="role">· ${esc(f.insider_role)}</span>`:""}<div><span class="badge other">Holdings only — no trades</span></div>`;
+    if (main.length){ const sh=main.reduce((a,t)=>a+(t.shares||0),0), v=main.reduce((a,t)=>a+(t.value||0),0);
+      what = ` <span class="num">${num(sh)} sh @ ${price(v/sh)}</span>`; }
+    else if (f.codes && f.codes!=="ERR") what = f.codes.split(",").map(c=>`<span class="badge other">${esc(META.codes[c]||c)}</span>`).join("");
+    else if (f.codes==="ERR") what = `<span class="role">couldn't read this filing</span>`;
+    else if (!f.parsed) what = `<span class="role">reading…</span>`;
+    const plan = f.signal==="SELL" && main.length && main.every(t=>t.plan_10b5_1) ? `<span class="badge plan">10b5-1</span>` : "";
+    return `${sig}${plan}<span class="who">${esc(f.insider||"")}</span>${f.insider_role?` <span class="role">· ${esc(f.insider_role)}</span>`:""}<div>${what}</div>`;
+  }
+  if (f.form.startsWith("144")) return `<span class="badge plan">Proposed sale</span><span class="role">Rule 144 notice · ${esc(f.company||"")}</span>`;
+  if (f.form.startsWith("8-K") && f.items){
+    return f.items.split(",").filter(i=>i!=="9.01").map(i=>`<span class="badge ev">${esc(META.items_8k[i]||"Item "+i)}</span>`).join("") || `<span class="role">Exhibits only</span>`;
+  }
+  return `<span class="role">${esc(f.company||"")}</span>`;
+}
+function valueCell(f){
+  if (f.signal==="BUY") return `<span class="val buy">${money(f.buy_value)}</span>`;
+  if (f.signal==="SELL") return `<span class="val sell">${money(f.sell_value)}</span>`;
+  return "";
+}
+function footnoteBlock(f){
+  // the filing's own notes: this is where "purchased in a private placement" or
+  // "weighted average price" is stated, which explains prices away from the market
+  const notes = [...new Set(f.transactions.map(t => t.footnotes).filter(Boolean))];
+  if (!notes.length) return "";
+  return `<div class="notes"><div class="notes-h">From the filing</div>${
+    notes.map(n => `<div>${esc(n)}</div>`).join("")}</div>`;
+}
+function txTable(f){
+  if (!f.transactions.length) return `<div class="inner"><a href="${esc(f.url)}" target="_blank" rel="noopener">Open filing on sec.gov ↗</a></div>`;
+  return `<div class="inner"><table class="tx"><thead><tr><th>Date</th><th>Type</th><th>Security</th><th class="r">Shares</th><th class="r">Price</th><th class="r">Value</th><th class="r">Owned after</th><th></th></tr></thead><tbody>${
+    f.transactions.map(t=>`<tr><td>${fmtDay(t.date)}</td><td>${esc(t.code)} · ${esc(META.codes[t.code]||"")}${t.derivative?" (deriv.)":""}</td><td>${esc(t.security||"")}</td>
+      <td class="r num">${t.acq_disp==="D"?"−":"+"}${num(t.shares)}</td><td class="r num">${price(t.price)}</td><td class="r num">${money(t.value)}</td>
+      <td class="r num">${num(t.owned_after)}</td><td>${t.direct==="I"?"indirect ":""}${t.plan_10b5_1?`<span class="badge plan">10b5-1</span>`:""}</td></tr>`).join("")
+  }</tbody></table>${footnoteBlock(f)}<div style="margin-top:8px"><a href="${esc(f.url)}" target="_blank" rel="noopener">Open filing on sec.gov ↗</a></div></div>`;
+}
+function renderFeed(){
+  const tb = $("#feed");
+  if (!state.rows.length){ tb.innerHTML = `<tr><td colspan="6" class="empty">No filings match yet. New ones appear here as soon as SEC publishes them.</td></tr>`; return; }
+  tb.innerHTML = state.rows.map(f => {
+    const isNew = !state.firstLoad && !state.seen.has(f.accession);
+    return `<tr class="row ${isNew?"new":""}" data-acc="${f.accession}">
+      <td class="c-time time">${fmtDate(f.filed_at)}<div class="rel">${rel(f.filed_at)}</div></td>
+      <td class="c-tk"><div class="tk">${esc(f.ticker||"")}</div><div class="co">${esc(f.company||"")}</div></td>
+      <td class="c-form"><span class="form">${esc(f.form)}</span></td>
+      <td class="c-det">${detailCell(f)}</td>
+      <td class="c-val" style="text-align:right">${valueCell(f)}</td>
+      <td class="c-link"><a href="${esc(f.url)}" target="_blank" rel="noopener" title="Open on sec.gov" onclick="event.stopPropagation()">↗</a></td>
+    </tr>${state.open.has(f.accession)?`<tr class="detail"><td colspan="6">${txTable(f)}</td></tr>`:""}`;
+  }).join("");
+  state.rows.forEach(f => state.seen.add(f.accession));
+  state.firstLoad = false;
+}
+$("#feed").addEventListener("click", e => { const r=e.target.closest("tr.row"); if(!r) return;
+  const a=r.dataset.acc; state.open.has(a)?state.open.delete(a):state.open.add(a); renderFeed(); });
+
+function query(before=""){
+  const p = new URLSearchParams({limit:100});
+  if (state.tickers.size) p.set("tickers",[...state.tickers].join(","));
+  if (state.group) p.set("group",state.group);
+  if (state.signal) p.set("signal",state.signal);
+  if (state.q) p.set("q",state.q);
+  if (before) p.set("before",before);
+  return "/api/filings?"+p;
+}
+let feedKey = "";
+async function loadFeed(){
+  const key = query();
+  if (key!==feedKey){ state.firstLoad = true; state.open.clear(); feedKey = key; }
+  const rows = await api(key);
+  const newBuys = !state.firstLoad && rows.some(f => f.signal==="BUY" && !state.seen.has(f.accession));
+  state.rows = rows; renderFeed();
+  $("#moreBtn").hidden = rows.length < 100;
+  if (newBuys && document.hidden) document.title = "● New insider buy · SEC Watch";
+}
+$("#moreBtn").onclick = async () => { const last=state.rows[state.rows.length-1]; if(!last) return;
+  const more = await api(query(last.filed_at)); state.rows = state.rows.concat(more); renderFeed(); $("#moreBtn").hidden = more.length<100; };
+let qt; $("#search").oninput = e => { clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value.trim(); loadFeed(); },250); };
+document.addEventListener("visibilitychange", () => { if(!document.hidden) document.title="SEC Watch"; });
+
+// ---------------- rules drawer ----------------
+const form = $("#rulesForm");
+$("#settingsBtn").onclick = async () => {
+  const r = await api("/api/rules");
+  for (const [k,v] of Object.entries(r)){ const el=form.elements[k]; if(!el) continue;
+    if (el.type==="checkbox") el.checked=!!v; else el.value = Array.isArray(v)? v.join(", ") : v; }
+  $("#drawer").classList.add("open");
+};
+$("#closeDrawer").onclick = () => $("#drawer").classList.remove("open");
+$("#drawer").onclick = e => { if(e.target.id==="drawer") $("#drawer").classList.remove("open"); };
+form.onsubmit = async e => { e.preventDefault(); const el=form.elements;
+  const body = { insider_buy:el.insider_buy.checked, insider_buy_min_usd:+el.insider_buy_min_usd.value||0,
+    insider_sell:el.insider_sell.checked, insider_sell_min_usd:+el.insider_sell_min_usd.value||0,
+    skip_10b5_1_sales:el.skip_10b5_1_sales.checked, forms:el.forms.value.split(",").map(s=>s.trim()).filter(Boolean),
+    alert_window_minutes:+el.alert_window_minutes.value||90 };
+  try{ await api("/api/rules",{method:"PUT",body:JSON.stringify(body)}); toast("Alert rules saved"); $("#drawer").classList.remove("open"); }
+  catch(err){ toast(err.message); } };
+$("#testBtn").onclick = async () => { try{ const r=await api("/api/test-alert",{method:"POST"}); toast(`Sent to ntfy topic "${r.topic}"`); loadStatus(); } catch(e){ toast(e.message); } };
+
+// ---------------- boot ----------------
+(async () => {
+  META = await api("/api/meta");
+  seg($("#groupSeg"),GROUPS,"group"); seg($("#sigSeg"),SIGS,"signal");
+  await Promise.all([loadStatus(), loadWatch(), loadStrip(), loadFeed()]);
+  setInterval(loadStatus, 5000);
+  setInterval(loadFeed, 10000);
+  setInterval(loadStrip, 30000);
+})();
+</script>
+</body>
+</html>
