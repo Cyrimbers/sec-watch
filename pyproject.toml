@@ -1,0 +1,28 @@
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [".venv", "data"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # import sorting
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "SIM",  # simplify
+]
+ignore = [
+    "B008",  # FastAPI dependencies are called in defaults by design
+    "E501",  # line length is handled by the formatter's limit above
+    "UP017", # datetime.UTC is 3.11+; keep timezone.utc so Ubuntu 22.04 (3.10) works
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]        # sys.path/env setup has to precede imports
+"tools/*" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
