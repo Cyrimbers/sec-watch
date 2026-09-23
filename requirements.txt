@@ -1,6 +1,6 @@
 # Pinned so a clone behaves the same way months from now.
 fastapi==0.141.1
-uvicorn==0.46.0
+uvicorn==0.53.0
 httpx==0.28.1
 PyYAML==6.0.3
 defusedxml==0.7.1     # SEC filings are untrusted XML: guards against entity-expansion attacks
