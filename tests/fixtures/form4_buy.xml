@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<ownershipDocument>
+    <schemaVersion>X0508</schemaVersion>
+    <documentType>4</documentType>
+    <periodOfReport>2026-09-16</periodOfReport>
+    <notSubjectToSection16>0</notSubjectToSection16>
+    <aff10b5One>0</aff10b5One>
+    <issuer>
+        <issuerCik>0000885725</issuerCik>
+        <issuerName>BOSTON SCIENTIFIC CORP</issuerName>
+        <issuerTradingSymbol>BSX</issuerTradingSymbol>
+    </issuer>
+    <reportingOwner>
+        <reportingOwnerId>
+            <rptOwnerCik>0001234567</rptOwnerCik>
+            <rptOwnerName>DOE JANE A</rptOwnerName>
+        </reportingOwnerId>
+        <reportingOwnerRelationship>
+            <isDirector>1</isDirector>
+            <isOfficer>1</isOfficer>
+            <isTenPercentOwner>0</isTenPercentOwner>
+            <isOther>0</isOther>
+            <officerTitle>Chief Executive Officer</officerTitle>
+        </reportingOwnerRelationship>
+    </reportingOwner>
+    <nonDerivativeTable>
+        <nonDerivativeTransaction>
+            <securityTitle><value>Common Stock</value></securityTitle>
+            <transactionDate><value>2026-09-16</value></transactionDate>
+            <transactionCoding>
+                <transactionFormType>4</transactionFormType>
+                <transactionCode>P</transactionCode>
+                <equitySwapInvolved>0</equitySwapInvolved>
+            </transactionCoding>
+            <transactionAmounts>
+                <transactionShares><value>12000</value></transactionShares>
+                <transactionPricePerShare><value>98.25</value><footnoteId id="F1"/></transactionPricePerShare>
+                <transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts><sharesOwnedFollowingTransaction><value>142000</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+            <ownershipNature><directOrIndirectOwnership><value>D</value></directOrIndirectOwnership></ownershipNature>
+        </nonDerivativeTransaction>
+        <nonDerivativeTransaction>
+            <securityTitle><value>Common Stock</value></securityTitle>
+            <transactionDate><value>2026-09-16</value></transactionDate>
+            <transactionCoding>
+                <transactionFormType>4</transactionFormType>
+                <transactionCode>P</transactionCode>
+                <equitySwapInvolved>0</equitySwapInvolved>
+            </transactionCoding>
+            <transactionAmounts>
+                <transactionShares><value>8000</value></transactionShares>
+                <transactionPricePerShare><value>98.75</value></transactionPricePerShare>
+                <transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts><sharesOwnedFollowingTransaction><value>150000</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+            <ownershipNature><directOrIndirectOwnership><value>D</value></directOrIndirectOwnership></ownershipNature>
+        </nonDerivativeTransaction>
+    </nonDerivativeTable>
+    <footnotes>
+        <footnote id="F1">Weighted average price. Prices ranged from $98.10 to $98.40.</footnote>
+    </footnotes>
+    <ownerSignature><signatureName>/s/ Attorney-in-fact</signatureName><signatureDate>2026-09-18</signatureDate></ownerSignature>
+</ownershipDocument>

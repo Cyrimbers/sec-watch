@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ownershipDocument>
+    <schemaVersion>X0508</schemaVersion>
+    <documentType>4</documentType>
+    <issuer><issuerCik>0000789019</issuerCik><issuerName>MICROSOFT CORP</issuerName><issuerTradingSymbol>MSFT</issuerTradingSymbol></issuer>
+    <reportingOwner>
+        <reportingOwnerId><rptOwnerCik>0001111111</rptOwnerCik><rptOwnerName>SMITH BRADFORD L</rptOwnerName></reportingOwnerId>
+        <reportingOwnerRelationship><isOfficer>1</isOfficer><officerTitle>Vice Chair and President</officerTitle></reportingOwnerRelationship>
+    </reportingOwner>
+    <nonDerivativeTable>
+        <nonDerivativeTransaction>
+            <securityTitle><value>Common Stock</value></securityTitle>
+            <transactionDate><value>2026-09-15</value></transactionDate>
+            <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>S</transactionCode><equitySwapInvolved>0</equitySwapInvolved></transactionCoding>
+            <transactionAmounts>
+                <transactionShares><value>5000</value><footnoteId id="F1"/></transactionShares>
+                <transactionPricePerShare><value>505.10</value></transactionPricePerShare>
+                <transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts><sharesOwnedFollowingTransaction><value>600000</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+            <ownershipNature><directOrIndirectOwnership><value>D</value></directOrIndirectOwnership></ownershipNature>
+        </nonDerivativeTransaction>
+    </nonDerivativeTable>
+    <derivativeTable>
+        <derivativeTransaction>
+            <securityTitle><value>Stock Option</value></securityTitle>
+            <transactionDate><value>2026-09-15</value></transactionDate>
+            <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>M</transactionCode></transactionCoding>
+            <transactionAmounts>
+                <transactionShares><value>1000</value></transactionShares>
+                <transactionPricePerShare><value>0</value></transactionPricePerShare>
+                <transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode>
+            </transactionAmounts>
+        </derivativeTransaction>
+    </derivativeTable>
+    <footnotes>
+        <footnote id="F1">The sales reported were effected pursuant to a Rule 10b5-1 trading plan adopted on March 3, 2026.</footnote>
+    </footnotes>
+</ownershipDocument>
