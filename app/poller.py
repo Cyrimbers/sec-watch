@@ -17,6 +17,22 @@ from .form4 import parse_ownership_xml, summarise
 log = logging.getLogger("secwatch.poller")
 
 OWNERSHIP_FORMS = {"3", "4", "5", "3/A", "4/A", "5/A"}
+MIN_CATCHUP_GAP = timedelta(minutes=30)
+
+
+def catchup_since(newest_stored: str, backfill_days: int) -> str | None:
+    """How far back a start-up catch-up should re-read, or None if the gap is trivial.
+
+    Gap measured from the newest filing already stored, minus an hour of overlap so a
+    filing accepted moments before shutdown can't fall between the two windows. Capped at
+    backfill_days so a database untouched for months doesn't trigger an enormous sweep.
+    """
+    now = datetime.now(timezone.utc)
+    last = datetime.fromisoformat(newest_stored)
+    if now - last < MIN_CATCHUP_GAP:
+        return None
+    floor = now - timedelta(days=backfill_days)
+    return max(floor, last - timedelta(hours=1)).isoformat()
 
 
 class Poller:
@@ -88,8 +104,36 @@ class Poller:
         for w in self.db.watchlist():
             if not w["backfilled"]:
                 self.backfill_queue.put_nowait(w["ticker"])
+        await self.startup_catchup()
         self._tasks += [asyncio.create_task(self._live_loop()),
                         asyncio.create_task(self._worker_loop())]
+
+    async def startup_catchup(self):
+        """Re-read far enough back to cover however long the app was down.
+
+        The routine sweep only looks back sweep_days, so a machine that was off for longer
+        than that leaves a permanent hole: nothing polled at the time, and nothing ever goes
+        back for it. Here the window is the actual downtime instead — from the newest filing
+        already stored, with an hour of overlap, capped at backfill_days.
+        """
+        row = self.db.conn.execute("SELECT MAX(filed_at) m FROM filings").fetchone()
+        if not row or not row["m"]:
+            return                                   # fresh database: backfill handles it
+        since = catchup_since(row["m"], self.cfg["backfill_days"])
+        if since is None:
+            return                                   # gap too small to bother with
+        down_for = datetime.now(timezone.utc) - datetime.fromisoformat(row["m"])
+        log.info("catch-up: app was down ~%.1fh, re-reading filings since %s",
+                 down_for.total_seconds() / 3600, since[:16])
+        self.status["backfilling"] = "catch-up"
+        try:
+            for cik, ticker in list(self.watch.items()):
+                try:
+                    await self._ingest_company(cik, ticker, since, "sweep")
+                except Exception as e:  # noqa: BLE001
+                    log.warning("catch-up %s failed: %s", ticker, e)
+        finally:
+            self.status["backfilling"] = None
 
     async def load_ticker_map(self):
         cache = DATA_DIR / "company_tickers.json"

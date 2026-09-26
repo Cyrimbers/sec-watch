@@ -124,7 +124,7 @@ These caused real bugs during development, and they're the sort of thing that is
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q          # 19 tests, no network required
+pytest -q          # 20 tests, no network required
 ruff check .
 ```
 
@@ -139,8 +139,10 @@ Secrets live in `.env`, which is git-ignored. See [SECURITY.md](SECURITY.md).
 
 ## Limitations
 
-- **Only runs while your machine does.** Alerts stop when the computer sleeps; the catch-up digest
-  covers the gap when it wakes. A £4/month VPS removes the problem.
+- **Only runs while your machine does.** Nothing is collected while it's off. On start-up it
+  re-reads every filing published during the downtime, so the dashboard stays complete, and one
+  digest notification summarises anything alert-worthy from the last 24 hours. A £4/month VPS
+  removes the problem entirely.
 - **US SEC filers only.** LSE tickers like `VUAG.L` won't resolve.
 - **Fast on the filing, not the trade.** Insiders have two business days after a trade to file, so
   you see the filing the moment it's public — not the trade the moment it happens.
