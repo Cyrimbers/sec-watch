@@ -353,3 +353,28 @@ def test_concurrent_evaluators_send_one_alert_not_two(monkeypatch):
     assert len(db.recent_alerts()) == 1
     assert db.conn.execute("SELECT alerted FROM filings WHERE accession='race-26-1'"
                            ).fetchone()["alerted"] == 1
+
+
+def test_catchup_window_covers_actual_downtime():
+    """Regression: the routine sweep looks back 2 days, so a longer outage left a hole.
+
+    Real case: machine off from Wed 23:15 to Sat 11:30. The sweep recovered only the last
+    two days, and Wednesday's post-close filings were never collected at all.
+    """
+    from app.poller import catchup_since
+
+    now = datetime.now(timezone.utc)
+
+    # down for 60 hours: the window must reach back past the whole outage
+    last = (now - timedelta(hours=60)).isoformat()
+    since = datetime.fromisoformat(catchup_since(last, backfill_days=90))
+    assert since < now - timedelta(hours=60), "window must cover the full downtime"
+    assert since >= now - timedelta(hours=62), "with an hour of overlap, not more"
+
+    # a database untouched for a year is capped at backfill_days, not a year of requests
+    stale = (now - timedelta(days=365)).isoformat()
+    capped = datetime.fromisoformat(catchup_since(stale, backfill_days=90))
+    assert capped >= now - timedelta(days=90, minutes=1)
+
+    # a brief restart isn't worth a catch-up; the normal sweep covers it
+    assert catchup_since((now - timedelta(minutes=5)).isoformat(), backfill_days=90) is None
