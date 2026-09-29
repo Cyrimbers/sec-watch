@@ -378,3 +378,40 @@ def test_catchup_window_covers_actual_downtime():
 
     # a brief restart isn't worth a catch-up; the normal sweep covers it
     assert catchup_since((now - timedelta(minutes=5)).isoformat(), backfill_days=90) is None
+
+
+def test_digest_does_not_wait_on_machine_uptime(monkeypatch):
+    """Regression: the digest was gated on the first scheduled sweep.
+
+    That sweep was due when `time.monotonic() - last_sweep > interval`, and monotonic()
+    counts from machine boot — so on a freshly booted PC the first sweep, and therefore the
+    catch-up digest, sat idle for up to sweep_minutes. Observed live: a digest arriving six
+    minutes after start-up instead of seconds.
+    """
+    db = DB(Path(tempfile.mkdtemp()) / "sweep.db")
+    cfg = {"watchlist": [], "poll_seconds": 20, "sweep_minutes": 5, "backfill_days": 90,
+           "catchup_hours": 24, "alerts": RULES, "user_agent": "K test@test.io",
+           "ntfy_server": "x", "ntfy_topic": "t"}
+    p = Poller(db, cfg)
+    db.set_setting("alert_rules", RULES)
+    db.set_setting("last_digest_at", now_iso(60 * 30))
+    db.add_ticker("BSX", "0000885725", "BOSTON SCIENTIFIC CORP")
+    p.refresh_watch()
+
+    # a filing from three days ago: the app was clearly down, so a catch-up is warranted
+    db.insert_filing({"accession": "old-26-1", "cik": "0000885725", "ticker": "BSX",
+                      "company": "B", "form": "8-K", "filed_at": now_iso(60 * 72),
+                      "url": "u", "source": "live"})
+    db.update_filing("old-26-1", parsed=1, alerted=1)
+
+    ingested = []
+
+    async def fake_ingest(cik, ticker, since, source):
+        ingested.append((ticker, since, source))
+    monkeypatch.setattr(p, "_ingest_company", fake_ingest)
+
+    assert p._swept_once is False
+    asyncio.run(p.startup_catchup())
+
+    assert ingested, "catch-up should have re-read the watchlist"
+    assert p._swept_once is True, "digest must not wait for the scheduled sweep as well"

@@ -47,7 +47,12 @@ class Poller:
         self.in_progress: set[str] = set()
         self._primary_docs: dict[str, str] = {}   # accession -> primary doc name (from submissions)
         self.backfill_queue: asyncio.Queue[str] = asyncio.Queue()
+        # time.monotonic() counts from machine boot, not from app start, so a fixed
+        # "sweep when monotonic - last_sweep > interval" test behaves differently on a
+        # freshly booted PC than on one that has been up for hours. An explicit flag
+        # keeps "have we swept yet?" independent of the clock.
         self.last_sweep = 0.0
+        self._swept_once = False
         self._digest_done = False
         self.status = {
             "started_at": now_iso(), "last_poll": None, "last_poll_ok": None,
@@ -121,7 +126,8 @@ class Poller:
             return                                   # fresh database: backfill handles it
         since = catchup_since(row["m"], self.cfg["backfill_days"])
         if since is None:
-            return                                   # gap too small to bother with
+            self._swept_once = True                  # restarted moments ago: nothing missed
+            return
         down_for = datetime.now(timezone.utc) - datetime.fromisoformat(row["m"])
         log.info("catch-up: app was down ~%.1fh, re-reading filings since %s",
                  down_for.total_seconds() / 3600, since[:16])
@@ -134,6 +140,9 @@ class Poller:
                     log.warning("catch-up %s failed: %s", ticker, e)
         finally:
             self.status["backfilling"] = None
+            # the catch-up is a deeper sweep than the routine one, so the digest has
+            # everything it needs now and must not also wait for the scheduled sweep
+            self._swept_once = True
 
     async def load_ticker_map(self):
         cache = DATA_DIR / "company_tickers.json"
@@ -203,12 +212,14 @@ class Poller:
                     await self.process(f["accession"])
                 if not self.backfill_queue.empty():
                     await self.backfill(self.backfill_queue.get_nowait())
-                elif time.monotonic() - self.last_sweep > self.cfg["sweep_minutes"] * 60:
+                elif (not self._swept_once
+                      or time.monotonic() - self.last_sweep > self.cfg["sweep_minutes"] * 60):
                     await self.sweep()
                     self.last_sweep = time.monotonic()
+                    self._swept_once = True
                 await self.evaluate_alerts()
                 # once the backlog is clear, tell the user what they missed while offline
-                if (not self._digest_done and self.last_sweep > 0
+                if (not self._digest_done and self._swept_once
                         and self.backfill_queue.empty() and not self.db.pending_parse(limit=1)):
                     await self.send_catchup_digest()
                     self._digest_done = True
