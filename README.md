@@ -1,5 +1,9 @@
 # SEC Watch
 
+> [!NOTE]
+> **This is the original self-hosted edition (v0.1.x). It is kept here as it was and is no longer updated.**
+> SEC Watch now runs as a hosted service at **[secwatch.app](https://secwatch.app)**: nothing to install, alerts set up in the browser, plus US politicians' trades (House members, the President and cabinet), committee seats and a performance estimate. It is currently an invite-only beta.
+
 **Real-time SEC EDGAR filing alerts for the companies you actually care about.**
 
 When a company insider buys their own stock on the open market, they have to tell the SEC on a
